@@ -1,11 +1,23 @@
 #include <execinfo.h>
+#include <string>
+
+const size_t CALLER_FUNC_INDEX = 2;
+
+std:string get_callfunc_addr()
+{
+    void *p_ret = __builtin_return_address(CALLER_FUNC_INDEX);
+    return "";
+}
+
+
+#if 0
 #include <vector>
 #include <string>
 #include <malloc.h>
-
 const size_t MAX_TRACE_FUNC_NAME_LEN = 1000;
-const size_t CALLER_FUNC_INDEX = 3;
+#endif
 
+#if 0
 void get_caller_func(std::vector<std::string>& vec_backtrace, std::string& caller_name)
 {
     //Attention: while you use backtrace_symbols, the compile option "-rdynamic" is essential
@@ -30,6 +42,7 @@ void get_caller_func(std::vector<std::string>& vec_backtrace, std::string& calle
 
     // symbol_list malloced in backtrace_symbols()
     free(symbol_list);
+    symbol_list = NULL;
     return;
 }
-
+#endif
