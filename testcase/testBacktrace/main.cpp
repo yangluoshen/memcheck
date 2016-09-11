@@ -1,5 +1,9 @@
 #include <stdio.h>
+#include <sstream>
 #include <execinfo.h>
+//#include <iostream>
+
+using namespace std;
 
 void print_ret_backtrace()
 {
@@ -9,6 +13,16 @@ void print_ret_backtrace()
     printf("ret:   %p\n", p_ret);
     p_ret = __builtin_return_address(2); 
     printf("ret:   %p\n", p_ret);
+}
+
+
+string get_caller_ip()
+{
+    void* p_ret = __builtin_return_address(0);
+    ostringstream oss("");
+    oss << p_ret;
+    
+    return oss.str();
 }
 
 void coo()
@@ -35,6 +49,9 @@ int main(int argc, char** argv)
 {
     //foo();
 
-    void* p_ret = __builtin_return_address(2); 
+    get_caller_ip();
+    //void* p_ret = __builtin_return_address(0); 
+    //cout << get_caller_ip() << endl;
+
     return 1;
 }

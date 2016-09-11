@@ -1,13 +1,14 @@
 CXX ?= g++
 CXXFLAGS = 
 CXX_FLAGS = -Wall -Wshadow -Wextra -rdynamic 
-CXX_LD_FLAGS = -shared -fPIC
+CXX_LD_FLAGS = -fpic -shared 
 CXX_DEBUG_FLAGS = -g
 CXX_RELEASE_FLAGS = -O3 -march=native
-CXX_ARCH = -m32
+#CXX_ARCH = -m32
 
 CXXFLAGS += -D__MEMPOOL_RUNTIME_DETAIL 
 CXXFLAGS += -D__PRIND_LOG
+CXXFLAGS += -D__USERDYNAMIC_OPTIONS
 
 LD_MEMPOOL = libleak.so
 AR_MEMPOOL = libleak.a
@@ -17,17 +18,12 @@ OBJS = mempool.o loghandle.o memutil.o
 SRCS = mempool.cpp loghandle.cpp memutil.cpp
 
 #don't use option -pedantic please!!!
-so_mempool: $(SRCS)
-	$(CXX) $(CXX_LD_FLAGS) $(SRCS) -o $(LD_MEMPOOL)  -Wall -Wshadow $(CXX_ARCH) 
+so_mempool: 
+	$(CXX) $(CXX_LD_FLAGS) -o $(LD_MEMPOOL)  -Wall -Wshadow $(SRCS) $(CXXFLAGS)
 	mv $(LD_MEMPOOL) $(LIB_DIR)
 ar_mempool: $(SRCS)
 	$(CXX) -c $(SRCS) $(CXX_ARCH) $(CXXFLAGS)
 	ar rcs $(AR_MEMPOOL) $(OBJS)
-
-ar_mempool_test: mempool.cpp
-	$(CXX) -c mempool.cpp $(CXX_ARCH)
-	ar rcs $(AR_MEMPOOL) mempool.o
-
 
 #if use backtrace, -rdynamic is essential
 main: main.cpp 

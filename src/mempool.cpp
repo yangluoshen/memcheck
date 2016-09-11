@@ -5,24 +5,33 @@
 #include <map>
 #include <vector>
 
-#include "loghandle.cpp"
-#include "memutil.cpp"
+#include "loghandle.h"
+//#include "memutil.h"
 
-const size_t MAX_LEAK_RECORD_NUM = 1000;
+const size_t MAX_LEAK_RECORD_NUM = 10000;
 
+#if defined __USE_RDYNAMIC_OPTION
 struct AddrInfo
 {
-    std::string file_name;
-    std::string line_no;
-    std::string func_name;
-    std::vector<std::string> vec_backtrace;
     void* addr;
+    std::vector<std::string> vec_backtrace;
 };
+#else
+struct AddrInfo
+{
+    void* addr;
+    std::string caller_ip;
+};
+#endif
 
 std::map<void*, AddrInfo> g_map_memory_addr;
 
 //void __fizz_malloc_hook_init(void);
-void get_caller_func(std::vector<std::string>& vec_backtrace, std::string& caller_name);
+std::string get_callfunc_addr();
+void get_callerfunc_addr(std::vector<std::string>& vec_backtrace);
+void insert_addrinfo_to_map(const AddrInfo& addrinfo);
+void print_addrinfo_in_format(const AddrInfo& addrinfo);
+//void get_caller_func(std::vector<std::string>& vec_backtrace, std::string& caller_name);
 
 static void (*old_free)(void *ptr, const void *caller);
 static void *(*old_malloc)(size_t size, const void *caller);
@@ -74,18 +83,16 @@ static void *__fizz_malloc(size_t size, const void *caller)
     __fizz_hook_restore();        // hook restore is essential, otherwise it will dead loop
     ptr = malloc(size);
 #if defined __MEMPOOL_RUNTIME_DETAIL
-    //std::cout<<"malloc:"<< ptr << std::endl;
     if (ptr)
     {
-        std::string caller_name;
-        AddrInfo addrInfo;
-        addrInfo.addr =  ptr;
-        (void) get_caller_func(addrInfo.vec_backtrace, caller_name);
-        addrInfo.func_name = caller_name;
-        if (g_map_memory_addr.size() < MAX_LEAK_RECORD_NUM)
-        {
-            g_map_memory_addr.insert(std::make_pair(addrInfo.addr, addrInfo));
-        }
+        AddrInfo addrinfo;
+        addrinfo.addr = ptr;
+#if defined __USE_RDYNAMIC_OPTION
+        get_callerfunc_addr(addrinfo.vec_backtrace);
+#else
+        addrinfo.caller_ip = get_callfunc_addr();
+#endif
+        insert_addrinfo_to_map(addrinfo);
     }
 #endif
 
@@ -97,8 +104,8 @@ static void *__fizz_malloc(size_t size, const void *caller)
 static void __fizz_mempool_destroy()
 {
     __fizz_hook_restore();
-    //std::cout << "memory pool size:"<< g_map_memory_addr.size()<< std::endl;
-#if defined __PRIND_LOG
+
+#if defined __PRINT_LOG
     LogHeadInfo head_info;
     head_info.leak_sum = g_map_memory_addr.size();
     LogHandle::get_instance().log_head_info(head_info);
@@ -108,13 +115,7 @@ static void __fizz_mempool_destroy()
     for (; iter != g_map_memory_addr.end(); ++iter)
     {
         LogHandle::get_instance().log_print(line);
-        //std::cout << "addr:"<< iter->first<<",caller:"<<iter->second.func_name << std::endl;
-        std::vector<std::string>::iterator subIter = iter->second.vec_backtrace.begin();
-        for(; subIter != iter->second.vec_backtrace.end(); ++ subIter)
-        {
-            std::string leak_info(*subIter);
-            LogHandle::get_instance().log_debug(leak_info);
-        }
+        print_addrinfo_in_format(iter->second);
     }
 #endif /*__PRINT_LOG */
     return ;
@@ -148,4 +149,28 @@ void operator delete[](void* p)
     free(p);
 }
 
+
+void insert_addrinfo_to_map(const AddrInfo& addrinfo)
+{
+    if (g_map_memory_addr.size() < MAX_LEAK_RECORD_NUM)
+    {
+        g_map_memory_addr.insert(std::make_pair(addrinfo.addr, addrinfo));
+    }
+
+    return;
+}
+
+void print_addrinfo_in_format(const AddrInfo& addrinfo)
+{
+#ifndef __USE_RDYNAMIC_OPTION
+    LogHandle::get_instance().log_debug(addrinfo.caller_ip);
+#else
+    std::vector <std::string>::const_iterator iter = addrinfo.vec_backtrace.begin();
+    for (; iter != addrinfo.vec_backtrace.end(); ++ iter)
+    {
+        LogHandle::get_instance().log_debug(*iter);
+    }
+#endif
+    return;
+}
 
