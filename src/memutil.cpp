@@ -8,7 +8,7 @@
 #define CALLER_FUNC_INDEX  1
 const size_t MAX_TRACE_FUNC_NAME_LEN = 1024;
 
-inline std::string get_callfunc_addr()
+std::string get_callerfunc_addr()
 {
     void *p_ret = __builtin_return_address(CALLER_FUNC_INDEX);
     std::ostringstream oss("");
@@ -17,7 +17,7 @@ inline std::string get_callfunc_addr()
     return oss.str();
 }
 
-/*Attension: -rdynamic option si essential*/
+/*Attension: -rdynamic option is essential*/
 void get_callerfunc_addr(std::vector<std::string>& vec_backtrace)
 {
     //Attention: while you use backtrace_symbols, the compile option "-rdynamic" is essential

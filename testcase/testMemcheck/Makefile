@@ -34,7 +34,7 @@ ar_mempool_test: mempool.cpp
 
 #if use backtrace, -rdynamic is essential
 so_main: main.cpp 
-	$(CXX) $(CXX_FLAGS) -rdynamic -o main main.cpp $(LD_LEAK_FLAG) $(CXX_DEBUG_FLAGS) #$(CXX_ARCH)
+	$(CXX) $(CXX_FLAGS)  -o main main.cpp $(LD_LEAK_FLAG) $(CXX_DEBUG_FLAGS) #$(CXX_ARCH)
 
 ar_main: main.cpp
 	$(CXX) $(CXX_FLAGS) -o main main.cpp -L. $(LD_LEAK_FLAG) $(CXX_DEBUG_FLAGS) -I$(SRC_DIR) #$(CXX_ARCH)

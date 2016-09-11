@@ -26,8 +26,7 @@ struct AddrInfo
 
 std::map<void*, AddrInfo> g_map_memory_addr;
 
-//void __fizz_malloc_hook_init(void);
-std::string get_callfunc_addr();
+std::string get_callerfunc_addr();
 void get_callerfunc_addr(std::vector<std::string>& vec_backtrace);
 void insert_addrinfo_to_map(const AddrInfo& addrinfo);
 void print_addrinfo_in_format(const AddrInfo& addrinfo);
@@ -90,7 +89,7 @@ static void *__fizz_malloc(size_t size, const void *caller)
 #if defined __USE_RDYNAMIC_OPTION
         get_callerfunc_addr(addrinfo.vec_backtrace);
 #else
-        addrinfo.caller_ip = get_callfunc_addr();
+        addrinfo.caller_ip = get_callerfunc_addr();
 #endif
         insert_addrinfo_to_map(addrinfo);
     }
