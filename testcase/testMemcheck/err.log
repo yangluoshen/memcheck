@@ -1,0 +1,21 @@
+/home/yangluo/github/memcheck/src/mempool.cpp: In function ‘void __fizz_hook_back()’:
+/home/yangluo/github/memcheck/src/mempool.cpp:31:18: warning: ‘__malloc_hook’ is deprecated (declared at /usr/include/malloc.h:153) [-Wdeprecated-declarations]
+     old_malloc = __malloc_hook;
+                  ^
+/home/yangluo/github/memcheck/src/mempool.cpp:32:16: warning: ‘__free_hook’ is deprecated (declared at /usr/include/malloc.h:150) [-Wdeprecated-declarations]
+     old_free = __free_hook;
+                ^
+/home/yangluo/github/memcheck/src/mempool.cpp: In function ‘void __fizz_hook_init()’:
+/home/yangluo/github/memcheck/src/mempool.cpp:37:5: warning: ‘__malloc_hook’ is deprecated (declared at /usr/include/malloc.h:153) [-Wdeprecated-declarations]
+     __malloc_hook = __fizz_malloc;
+     ^
+/home/yangluo/github/memcheck/src/mempool.cpp:38:5: warning: ‘__free_hook’ is deprecated (declared at /usr/include/malloc.h:150) [-Wdeprecated-declarations]
+     __free_hook = __fizz_free;
+     ^
+/home/yangluo/github/memcheck/src/mempool.cpp: In function ‘void __fizz_hook_restore()’:
+/home/yangluo/github/memcheck/src/mempool.cpp:43:5: warning: ‘__malloc_hook’ is deprecated (declared at /usr/include/malloc.h:153) [-Wdeprecated-declarations]
+     __malloc_hook = old_malloc;
+     ^
+/home/yangluo/github/memcheck/src/mempool.cpp:44:5: warning: ‘__free_hook’ is deprecated (declared at /usr/include/malloc.h:150) [-Wdeprecated-declarations]
+     __free_hook = old_free;
+     ^

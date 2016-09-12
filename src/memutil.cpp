@@ -5,10 +5,13 @@
 #include <string>
 #include <malloc.h>
 
+#include "memutil.h"
+
 #define CALLER_FUNC_INDEX  1
 const size_t MAX_TRACE_FUNC_NAME_LEN = 1024;
 
-std::string get_callerfunc_addr()
+
+std::string MEMUTIL::get_callerfunc_addr()
 {
     void *p_ret = __builtin_return_address(CALLER_FUNC_INDEX);
     std::ostringstream oss("");
@@ -18,7 +21,7 @@ std::string get_callerfunc_addr()
 }
 
 /*Attension: -rdynamic option is essential*/
-void get_callerfunc_addr(std::vector<std::string>& vec_backtrace)
+void MEMUTIL::get_callerfunc_addr(std::vector<std::string>& vec_backtrace)
 {
     //Attention: while you use backtrace_symbols, the compile option "-rdynamic" is essential
     void* trace_func_buf[MAX_TRACE_FUNC_NAME_LEN] = {0};

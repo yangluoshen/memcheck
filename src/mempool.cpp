@@ -6,30 +6,19 @@
 #include <vector>
 
 #include "loghandle.h"
-//#include "memutil.h"
+#include "mempool.h"
+#include "memutil.h"
 
 const size_t MAX_LEAK_RECORD_NUM = 10000;
+ULLONG AddrInfo::m_total_alloc_size = 0;
+ULLONG AddrInfo::m_total_free_size = 0;
 
-#if defined __USE_RDYNAMIC_OPTION
-struct AddrInfo
-{
-    void* addr;
-    std::vector<std::string> vec_backtrace;
-};
-#else
-struct AddrInfo
-{
-    void* addr;
-    std::string caller_ip;
-};
-#endif
-
-std::map<void*, AddrInfo> g_map_memory_addr;
+std::map<void*, LeakCheckAddrInfo> g_map_leak_check;
 
 std::string get_callerfunc_addr();
 void get_callerfunc_addr(std::vector<std::string>& vec_backtrace);
-void insert_addrinfo_to_map(const AddrInfo& addrinfo);
-void print_addrinfo_in_format(const AddrInfo& addrinfo);
+void insert_addrinfo_to_map(const LeakCheckAddrInfo& addrinfo);
+void print_addrinfo_in_format(const LeakCheckAddrInfo& addrinfo);
 //void get_caller_func(std::vector<std::string>& vec_backtrace, std::string& caller_name);
 
 static void (*old_free)(void *ptr, const void *caller);
@@ -63,11 +52,10 @@ static void __fizz_free(void *ptr, const void *caller) {
     //std::cout << "free  :"<< ptr << std::endl;
 #endif
 
-    std::map<void*, AddrInfo>::iterator iter = g_map_memory_addr.find(ptr);
-    if (iter != g_map_memory_addr.end())
+    std::map<void*, LeakCheckAddrInfo>::iterator iter = g_map_leak_check.find(ptr);
+    if (iter != g_map_leak_check.end())
     {
-        g_map_memory_addr.erase(ptr);
-        //std::cout << "erase addr successfully:" << ptr << std::endl;
+        g_map_leak_check.erase(ptr);
     }
 
     free(ptr);
@@ -84,13 +72,12 @@ static void *__fizz_malloc(size_t size, const void *caller)
 #if defined __MEMPOOL_RUNTIME_DETAIL
     if (ptr)
     {
-        AddrInfo addrinfo;
-        addrinfo.addr = ptr;
-#if defined __USE_RDYNAMIC_OPTION
-        get_callerfunc_addr(addrinfo.vec_backtrace);
-#else
-        addrinfo.caller_ip = get_callerfunc_addr();
-#endif
+        LeakCheckAddrInfo addrinfo;
+
+        addrinfo.m_addr = ptr;
+        addrinfo.get_callerfunc_addr();
+        addrinfo.set_alloc_size(size);
+        
         insert_addrinfo_to_map(addrinfo);
     }
 #endif
@@ -106,12 +93,12 @@ static void __fizz_mempool_destroy()
 
 #if defined __PRINT_LOG
     LogHeadInfo head_info;
-    head_info.leak_sum = g_map_memory_addr.size();
+    head_info.leak_sum = g_map_leak_check.size();
     LogHandle::get_instance().log_head_info(head_info);
 
     std::string line("--------------------");
-    std::map<void*, AddrInfo>::iterator iter = g_map_memory_addr.begin();
-    for (; iter != g_map_memory_addr.end(); ++iter)
+    std::map<void*, LeakCheckAddrInfo>::iterator iter = g_map_leak_check.begin();
+    for (; iter != g_map_leak_check.end(); ++iter)
     {
         LogHandle::get_instance().log_print(line);
         print_addrinfo_in_format(iter->second);
@@ -149,27 +136,33 @@ void operator delete[](void* p)
 }
 
 
-void insert_addrinfo_to_map(const AddrInfo& addrinfo)
+void insert_addrinfo_to_map(const LeakCheckAddrInfo& addrinfo)
 {
-    if (g_map_memory_addr.size() < MAX_LEAK_RECORD_NUM)
+    if (g_map_leak_check.size() < MAX_LEAK_RECORD_NUM)
     {
-        g_map_memory_addr.insert(std::make_pair(addrinfo.addr, addrinfo));
+        g_map_leak_check.insert(std::make_pair(addrinfo.m_addr, addrinfo));
     }
 
     return;
 }
 
-void print_addrinfo_in_format(const AddrInfo& addrinfo)
+void print_addrinfo_in_format(const LeakCheckAddrInfo& addrinfo)
 {
 #ifndef __USE_RDYNAMIC_OPTION
-    LogHandle::get_instance().log_debug(addrinfo.caller_ip);
+    LogHandle::get_instance().log_debug(addrinfo.m_caller_ip);
 #else
-    std::vector <std::string>::const_iterator iter = addrinfo.vec_backtrace.begin();
-    for (; iter != addrinfo.vec_backtrace.end(); ++ iter)
+    std::vector <std::string>::const_iterator iter = addrinfo.m_vec_backtrace.begin();
+    for (; iter != addrinfo.m_vec_backtrace.end(); ++ iter)
     {
         LogHandle::get_instance().log_debug(*iter);
     }
 #endif
     return;
+}
+
+void LeakCheckAddrInfo::get_callerfunc_addr(void)
+{
+    (void)MEMUTIL::get_callerfunc_addr(this->m_vec_backtrace);
+    return ;
 }
 
