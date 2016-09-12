@@ -22,7 +22,4 @@ embeded
 
 tips
 ===
-- -rdynamic 选项变为可选, 如果编译时增加了这个选项，需增加预编译宏 __USE_RDYNAMIC_OPTION 
-
-
 
