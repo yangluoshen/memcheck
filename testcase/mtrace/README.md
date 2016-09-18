@@ -31,7 +31,7 @@ mtrace
 3. Result
 -----
 
-    yangluo@yangluoPC:~/github/memcheck/testcase/mtrace$ mtrace main a.log 
+    yangluo@yangluoPC:~/github/memcheck/testcase/mtrace$ mtrace main trace.log 
     
     Memory not freed:
     -----------------
