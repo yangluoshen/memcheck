@@ -1,6 +1,6 @@
 #include <malloc.h>
 #include <stdlib.h>
-//#include <iostream>
+#include <iostream>
 #include <string>
 #include <map>
 #include <vector>
@@ -109,6 +109,7 @@ static void __fizz_mempool_destroy()
 
 void __fizz_mempool_init()
 {
+    std::cout << "fizz_mempool_init" << std::endl;
     __fizz_hook_back();
     __fizz_hook_init();
     atexit(__fizz_mempool_destroy);
@@ -125,6 +126,7 @@ void __fizz_malloc_hook_init(void)
 }
 */
 
+#if 0
 void operator delete(void* p)
 {
     free(p);
@@ -134,6 +136,7 @@ void operator delete[](void* p)
 {
     free(p);
 }
+#endif
 
 
 void insert_addrinfo_to_map(const LeakCheckAddrInfo& addrinfo)
