@@ -40,7 +40,6 @@ void *operator new(size_t size, const char* file, int line)
     cout << print_count++ << ":alloc size :"<< size << endl;
     cout << print_count++ << ":file name  :"<< file << endl;
     cout << print_count++ << ":line no    :" << line << endl;
-    cout << print_count++ << ":in function:" << __FUNCTION__<< endl;
 
     void * ptr = malloc(size);
 
@@ -84,12 +83,11 @@ void operator delete[](void* ptr)
 void foo()
 {
     B* b = new B[2];
-    //B* b = new B;
-
-    //delete b;
-    
     delete[]  b;
 
+    //B* b = new B;
+    //delete b;
+    //
     return;
 }
 
