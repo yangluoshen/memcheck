@@ -82,8 +82,8 @@ void operator delete[](void* ptr)
 
 void foo()
 {
-    B* b = new B[2];
-    delete[]  b;
+    B* b = new B;
+    //delete[]  b;
 
     //B* b = new B;
     //delete b;
@@ -95,5 +95,6 @@ int main(void)
 {
     cout <<print_count++ << ":sizeof (B) = " << sizeof (B) << endl;
     foo (); 
+    malloc(3);
     return 0;
 }
