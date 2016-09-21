@@ -11,17 +11,9 @@ Memory check for C/C++.
               \/     \/     \/     \/     \/     \/
 </pre>
 
-1. Lightweight
------
-Valgrind is too heavy.
-
-2. Customerization
+1. Target
 ------
-Customerization
-
-3. Embeded
-------
-embeded
+- 造个轮子:)
 
 功能
 ----

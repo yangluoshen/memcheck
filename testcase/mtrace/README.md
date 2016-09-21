@@ -25,7 +25,7 @@ mtrace
     - 在当前目录下生成`trace.log`文件
     - 使用mtrace 解析trace.log
 
-        mtrace main trace.log
+          mtrace main trace.log
 
 
 3. Result
@@ -49,3 +49,21 @@ mtrace
 5. More
 ----
 - 尝试换取operator new的调用者, 使用gcc内建函数__builtin_return_addr.
+
+6. Solution
+------
+- 结合mtrace和new/delete操作符重写
+- 为防止有些进程没有显示main函数,注册一个__attribute__((constructor)) 用于调用mtrace();注册一个__attribute__(destructor_))生成内存泄露日志。
+- 尝试"头文件" + "宏开关"的形式，暂不使用动态库。
+- operator new 中存储新创建的指针; operator delete 除去该指针。
+
+7. About memtrace.h
+------
+- Usage
+    
+    g++ -g testMemtrace.cpp -o test
+    ./test
+    vi trace.report
+
+- Decription
+    memtrace.h 能够完成对new内存泄露的检测，但不能检查malloc，malloc的工作交给mtrace.
