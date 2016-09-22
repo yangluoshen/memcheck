@@ -1,69 +1,40 @@
 #include <stdio.h>
-#include <iostream>
-
-#include <malloc.h>
-#include <mcheck.h>
-
-static int print_count = 1;
-
-using namespace std;
+//#include "util.h"
+#include "memtrace.h"
 
 class A
 {
 public:
-    explicit A()
+    void alloc()
     {
-        cout << print_count++ << ":constructor A" << endl;    
+        int* a = new int[10];
+        delete[] a;
+        
+
+        //doo();
     }
 
-    virtual ~A()
-    {
-        cout << print_count ++ << ":destructor A" << endl;
-    }
+private:
+    int m_data;
+
 };
 
-class B : public A
+void foo ()
 {
-public:
-    explicit B() {
-        cout << print_count++ << ":constructor B" << endl;
-    }
-
-    ~B()
-    {
-        cout << print_count++  << ":destructor B" << endl;
-    }
-};
-
-void *operator new(size_t size, const char* file, int line)
-{
-    void * ptr = malloc(size);
-    return ptr;
-}
-
-void *operator new[](size_t size, const char* file, int line)
-{
-    void* ptr = malloc(size);
-    return ptr;
-}
-
-#define new new(__FILE__, __LINE__)
-
-void foo()
-{
-    B* b = new B;
-    //delete[]  b;
-
-    //B* b = new B;
-    //delete b;
-    //
-    return;
+    new char;
 }
 
 int main(void)
 {
-    mtrace();
-    foo (); 
-    malloc(3);
+    foo();
+    
+    A* a = new A;
+    
+    a->alloc();
+    A* aa = new A[10];
+    delete[] aa;
+
+    delete a;
+    
     return 0;
 }

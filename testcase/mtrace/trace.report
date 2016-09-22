@@ -2,6 +2,4 @@ Note: This file only records memory details which is alloced by "new" but never 
 
 File                  Line        Function                        Size      
 
-testMemtrace.cpp      19          foo                             1         
-testMemtrace.cpp      26          main                            4         
-testMemtrace.cpp      9           alloc                           40        
+main.cpp              24          foo                             1         

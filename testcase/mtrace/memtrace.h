@@ -1,8 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <map>
-#include <sstream>
-#include <iostream>
+#include <string>
 #include <mcheck.h>
 
 namespace{
@@ -10,7 +9,8 @@ namespace{
 class AllocatedMemInfo
 {
 public:
-    explicit AllocatedMemInfo(void* ptr, size_t size, std::string file_name, int line_no, const char* func_name):m_pointer(ptr), m_size(size), m_line_no(line_no),m_file_name(file_name), m_func_name(func_name)
+    explicit AllocatedMemInfo(void* ptr, size_t size, std::string file_name, int line_no, const char* func_name)
+    :m_pointer(ptr), m_size(size), m_line_no(line_no),m_file_name(file_name), m_func_name(func_name)
     {
     }
 
@@ -20,9 +20,8 @@ public:
 
     void format(char* buf)
     {
-
-        sprintf(buf, "%-20s  %-10d  %-30s  %-10lu\n", m_file_name.c_str(), m_line_no, m_func_name.c_str(), m_size);
-
+        sprintf(buf, "%-20s  %-10d  %-30s  %-10lu\n", \
+                m_file_name.c_str(), m_line_no, m_func_name.c_str(), m_size);
     }
 
 private:
@@ -43,7 +42,6 @@ void exit_main_procedure();
 void* operator new(size_t size, const char* file, int line, const char* func_name)
 {
     void* ptr = malloc(size);
-
     if (ptr)
     {
         std::string str_file(file);
@@ -57,7 +55,6 @@ void* operator new(size_t size, const char* file, int line, const char* func_nam
 void* operator new[](size_t size, const char* file, int line, const char* func_name)
 {
     void* ptr = malloc(size);
-
     if (ptr)
     {
         std::string str_file(file);
@@ -70,7 +67,7 @@ void* operator new[](size_t size, const char* file, int line, const char* func_n
 
 #define new new(__FILE__, __LINE__, __FUNCTION__)
 
-void operator delete(void* ptr)
+void operator delete(void* ptr) throw()
 {
     std::map<void*, AllocatedMemInfo>::const_iterator mem_iter = g_allocated_mem_info_map.find(ptr);
     if (mem_iter != g_allocated_mem_info_map.end())
@@ -79,11 +76,10 @@ void operator delete(void* ptr)
     }
 
     free(ptr);
-    
     return ;
 }
 
-void operator delete[](void* ptr)
+void operator delete[](void* ptr) throw()
 {
     std::map<void*, AllocatedMemInfo>::const_iterator mem_iter = g_allocated_mem_info_map.find(ptr);
     if (mem_iter != g_allocated_mem_info_map.end())
@@ -92,7 +88,6 @@ void operator delete[](void* ptr)
     }
 
     free(ptr);
-    
     return ;
 }
 
@@ -101,14 +96,12 @@ void before_main_procedure()
     setenv("MALLOC_TRACE", "trace.log", 1);
     mtrace();
 
-
     atexit(exit_main_procedure);
     return;
 }
 
 void exit_main_procedure() 
 {
-
     FILE* fp_out = fopen("trace.report", "w");
     if (!fp_out)
     {
@@ -127,6 +120,6 @@ void exit_main_procedure()
     }
 
     fclose(fp_out);
-
     return;
 }
+
