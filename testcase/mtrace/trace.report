@@ -2,4 +2,6 @@ Note: This file only records memory details which is alloced by "new" but never 
 
 File                  Line        Function                        Size      
 
-main.cpp              24          foo                             1         
+main.cpp              29          foo                             1         
+util.cpp              4           uoo                             4         
+maintain.cpp          5           moo                             4         

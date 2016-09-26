@@ -57,3 +57,35 @@ mtrace
 ------
 - 多个cpp文件包含memtrace.h时会报重定义错误，#ifndef解决不了，待解决。
 - 编译成so，操作符重写变得无效。
+
+5. BUG -> Solution
+------
+- 函数实现不应该写在头文件中，否则不同cpp文件包含该头文件之后，各自编译成obj，必然会导致冲定义。解决办法就是提取函数实现部分为.cpp(memtrace.cpp)。头文件只暴漏接口。将该.cpp文件编程动态库，方便使用。
+
+
+6. Solution -> Usage
+------
+- 编译动态库
+
+        g++ -shared -fPIC memtrace.cpp -o libtrace.so
+        cp libtrace.so /lib
+
+
+- 应用
+
+        g++ main.cpp maintain.cpp util.cpp -o main -ltrace
+
+- 结果
+        # head trace.report 
+
+        Note: This file only records memory details which is alloced by "new" but never "delete"
+
+        File                  Line        Function                        Size      
+
+        main.cpp              29          foo                             1         
+        util.cpp              8           uoo                             4         
+        maintain.cpp          8           moo                             4         
+
+        
+- 说明
+  应用层需包含memtrace.h文件。

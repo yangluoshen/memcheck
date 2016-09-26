@@ -1,14 +1,19 @@
 #include <stdio.h>
-//#include "util.h"
 #include "memtrace.h"
+//#include "common.h"
+
+//#define new new(__FILE__, __LINE__, __FUNCTION__)
+
+extern void moo();
+extern void uoo();
 
 class A
 {
 public:
     void alloc()
     {
-        int* a = new int[10];
-        delete[] a;
+//        int* a = new int[10];
+//        delete[] a;
         
 
         //doo();
@@ -27,14 +32,16 @@ void foo ()
 int main(void)
 {
     foo();
+    uoo();
+    moo();
     
-    A* a = new A;
+    //A* a = new A;
     
-    a->alloc();
-    A* aa = new A[10];
-    delete[] aa;
+    //a->alloc();
+    //A* aa = new A[10];
+    //delete[] aa;
 
-    delete a;
+    //delete a;
     
     return 0;
 }
