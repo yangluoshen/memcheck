@@ -8,28 +8,26 @@
  *
  * Note:
  *     1. mempool.h must be included by other file while using this cppfile
- *     2. -lpthread is essential
+ *     2. -pthread is essential
  *
  * */
 
-#include <fstream>
-#include <sstream>
-#include <ctime>
-#include <unistd.h>
+//#include <fstream>
+//#include <sstream>
+//#include <ctime>
+//#include <unistd.h>
 
-#include <execinfo.h>
 #include <vector>
-#include <string>
 
 #include <stdlib.h>
 #include <malloc.h>
-#include <iostream>
 #include <map>
 #include <climits>
 
-#include <pthread.h>
-
 #include "mempool.h"
+#include "log.h"
+#include "lock.h"
+#include "utility.h"
 
 typedef unsigned long long ULLONG;
 
@@ -40,83 +38,7 @@ const size_t MAX_LEAK_RECORD_NUM = 10000;
 namespace
 {
 
-class CMutexLock 
-{
-public:
 
-    CMutexLock();
-
-    ~CMutexLock();
-
-    void lock();
-
-    void unlock();
-
-private:
-
-    pthread_mutex_t m_mutex;
-};
-
-CMutexLock::CMutexLock()
-{
-    pthread_mutex_init(&this->m_mutex, NULL);
-}
-
-CMutexLock::~CMutexLock()
-{
-    pthread_mutex_destroy(&this->m_mutex);
-}
-
-void CMutexLock::lock()
-{
-    pthread_mutex_lock(&m_mutex);
-
-    return;
-}
-
-void CMutexLock::unlock()
-{
-    pthread_mutex_unlock(&m_mutex);
-
-    return;
-}
-
-template <typename LOCK>
-class FGuard
-{
-public:
-
-    FGuard(LOCK& lock);
-
-    ~FGuard();
-
-private:
-
-    FGuard(const FGuard&);
-
-    FGuard& operator=(const FGuard&);
-
-private:
-
-    LOCK& m_lock;
-};
-
-template <typename LOCK>
-inline
-FGuard<LOCK>::FGuard(LOCK& lock)
-    :m_lock(lock)
-{
-    m_lock.lock();
-}
-
-template <typename LOCK>
-inline
-FGuard<LOCK>::~FGuard()
-{
-    m_lock.unlock();
-}
-
-typedef FGuard<CMutexLock> MutexGuard;
 
 }
 
@@ -127,204 +49,6 @@ typedef FGuard<CMutexLock> MutexGuard;
 namespace
 {
 
-enum 
-{
-    FILE_TYPE_ALLOC = 0,
-    FILE_TYPE_FREE,
-    FILE_TYPE_BUTT
-};
-
-struct LogHeadInfo
-{
-    size_t leak_sum;
-
-    std::string description;
-};
-
-class LogHandle
-{
-private:
-
-    std::string log_file_name;
-
-    enum log_level
-    {
-       LOG_INFO,
-       LOG_DEBUG,
-       LOG_ERROR,
-       LOG_CRITICAL,
-       LOG_BUTT
-    };
-
-public:
-
-    static LogHandle& get_instance(unsigned int type);
-
-    void log_debug(const std::string& content);
-
-    void log_error(const std::string& content);
-
-    void log_head_info(LogHeadInfo head_info);
-    
-    void log_print(const std::string& log);
- 
-private:
-
-    LogHandle(unsigned int type);
-
-    virtual ~LogHandle(){}; 
-
-    void log_consist(enum log_level level, const std::string& content, std::string& log);
-
-    void get_logname(std::string& log_name);
-
-    void get_systime(std::string& now);
-    
-    unsigned int m_type;
-};
-
-LogHandle::LogHandle(unsigned int type)
-:m_type(type)
-{
-}
-
-LogHandle& LogHandle::get_instance(unsigned int type)
-{
-    switch(type)
-    {
-        case FILE_TYPE_ALLOC:
-            static LogHandle s_alloc_instance(type);
-            return s_alloc_instance;
-        case FILE_TYPE_FREE:
-            static LogHandle s_free_instance(type);
-            return s_free_instance;
-        default:
-            static LogHandle s_unknown_instance(FILE_TYPE_BUTT);
-            return s_unknown_instance;
-    }
-}
-
-void LogHandle::log_consist(enum log_level level, const std::string& content, std::string& log)
-{
-    (void)get_systime(log);
-
-    switch(level)
-    {
-        case LOG_INFO:
-            log.append(":[I] ");
-            break;
-
-        case LOG_DEBUG:
-            log.append(":[D] ");
-            break;
-            
-        case LOG_ERROR:
-            log.append(":[E] ");
-            break;
-
-        default:
-            break;        
-
-    }
-
-    log.append(content);
-
-    return;
-}
-
-void LogHandle::log_print(const std::string& log)
-{
-    if (log_file_name.empty())
-    {
-        get_logname(this->log_file_name); 
-    }
-    
-    std::ofstream fout(this->log_file_name.c_str(), std::ofstream::out | std::ofstream::app);
-    if (!fout.is_open())
-    {
-        return;
-    }
-
-    std::string log_buf(log);
-
-    log_buf.append("\r\n");
-
-    fout.write(log_buf.c_str(), log_buf.size());
-
-    fout.close();
-
-    return;
-}
-
-void LogHandle::log_debug(const std::string& content)
-{
-    std::string log;
-    log_consist(LOG_DEBUG, content, log);   
-    log_print(log);
-    return;
-}
-
-void LogHandle::log_error(const std::string& content)
-{
-    std::string log;
-    log_consist(LOG_ERROR, content, log);
-    log_print(log);
-    return;
-}
-
-void LogHandle::get_logname(std::string& log_name)
-{
-    pid_t pid = getpid();
-    std::ostringstream os("");
-    os << pid;
-    os << ".log";
-
-    log_name.append("fizz.memcheck.");
-    if (FILE_TYPE_ALLOC == m_type)
-    {
-        log_name.append("alloc.");
-    }
-    else if (FILE_TYPE_FREE == m_type)
-    {
-        log_name.append("free.");
-    }
-    else
-    {
-        log_name = "";
-        return;
-    }
-
-    log_name.append(os.str());
-
-    return;
-}
-
-void LogHandle::get_systime(std::string& now)
-{
-    time_t now_time;
-    now_time = time(NULL);
-
-    char time_buf[20] = {0}; //buffer of the string time ,20 is enough
-    strftime(time_buf, sizeof (time_buf), "%H:%M:%S", localtime(&now_time));
-    
-    now.assign(time_buf);
-
-    return;
-}
-
-void LogHandle::log_head_info(LogHeadInfo head_info)
-{
-    std::string output("/**************************\n");
-    output.append("* leak num: ");
-
-    std::ostringstream num_of_leak("");
-    num_of_leak << head_info.leak_sum;
-    output.append(num_of_leak.str());
-
-    output.append("\n************************/\n\n");
-
-    log_print(output);
-}
 
 
 }
@@ -426,36 +150,6 @@ std::map<size_t, LeakCheckAddrInfo> g_leak_addrinfo_map;
 }
 
 /**********************Memutil begin******************************************/
-namespace MEMUTIL
-{
-
-const size_t MAX_TRACE_FUNC_NAME_LEN = 1024;
-
-/*Attension: -rdynamic option is essential*/
-/*get backtrace*/
-void get_callerfunc_addr(std::vector<std::string>& vec_backtrace)
-{
-    //Attention: while you use backtrace_symbols, the compile option "-rdynamic" is essential
-    void* trace_func_buf[MAX_TRACE_FUNC_NAME_LEN] = {0};
-    size_t trace_func_num = 0;
-    trace_func_num = backtrace(trace_func_buf, MAX_TRACE_FUNC_NAME_LEN);
-
-    char** symbol_list;
-    symbol_list = backtrace_symbols(trace_func_buf, trace_func_num);
-    
-    vec_backtrace.clear();
-    for (size_t i = 0; i < trace_func_num; ++i)
-    {
-        std::string func_name(symbol_list[i]);
-        vec_backtrace.push_back(func_name);
-    }
-
-    // symbol_list alloced in backtrace_symbols()
-    free(symbol_list);
-    symbol_list = NULL;
-
-    return;
-}
 
 /*write an addrinfo to specific file*/
 void print_addrinfo_in_format(const LeakCheckAddrInfo& addrinfo)
@@ -498,12 +192,11 @@ void* dump_map(void* para)
     /* TODO: Lock */
     {
         MutexGuard guard(g_leak_map_mutex);
-        MEMUTIL::dump_memory_record(g_leak_addrinfo_map);
+        dump_memory_record(g_leak_addrinfo_map);
         g_leak_addrinfo_map.clear();
     }
 }
 
-}
 /**********************Memutil end******************************************/
 
 /**********************Memory Record begin******************************************/
@@ -675,7 +368,7 @@ void GMemoryRecordSwitch::setSwitch(bool bSwitch)
     }
 
     pthread_t dump_file_thread;
-    pthread_create(&dump_file_thread, NULL, MEMUTIL::dump_map, NULL);
+    pthread_create(&dump_file_thread, NULL, dump_map, NULL);
     
     return;
 }

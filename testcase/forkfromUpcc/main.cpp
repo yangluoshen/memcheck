@@ -1,7 +1,10 @@
+#include <vector>
+
 #include "memcheck.h"
 
 #include "unistd.h"
 
+using namespace std;
 class A
 {
 public:
@@ -12,8 +15,8 @@ public:
 
 void foo()
 {
-    SMiniCheck check;
 
+    SMiniCheck check;
     char* p = new char[1];
 
     char* p1 = new char[1];
@@ -27,8 +30,16 @@ void foo()
 
 int main()
 {
-    foo();
-
+    vector <int> vec_out;
+    vec_out.push_back(2);
+    {
+        SMiniCheck check;
+        foo();
+        vector <int> vec;
+        vec.push_back(1);
+        vec.push_back(2);
+        vec_out.push_back(2);
+    }
     sleep(1);
 
     return 1;

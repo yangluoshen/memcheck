@@ -8,7 +8,9 @@ Rengar
 1. Usage
 -----
     
-    g++ -g -rdynamic -pthread main.cpp mempool.cpp -o main -I include/ 
+    g++ -g -rdynamic -pthread -fPIC -shared -o libleak.so mempool.cpp lock.cpp log.cpp utility.cpp -I./include
+    g++ -g main.cpp -o main -lleak -L./ -I./include
+    
     ./main
 
 
@@ -25,3 +27,11 @@ Rengar
 - 同一个工程中，有且只有一个地方（最好是.cpp文件）中包含memcheck.h
 - 不用担心不包含memcheck.h用不到SMiniCheck，请包含mempool.h
     
+
+4. Todo List
+---------
+- 过滤对STL的检查 
+- 分离源文件，做成动态库 (done)
+- 改进memcheck.h的奇葩限制
+- 改进dump file 时CPU飙升 
+- 扩充检查粒度
