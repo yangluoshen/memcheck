@@ -1,171 +1,378 @@
-#include <malloc.h>
-#include <stdlib.h>
-#include <iostream>
-#include <string>
-#include <map>
+/**
+ * Decription: Dump memory infomation allocated or freed to specific files
+ * Author: Fizz
+ * Points:
+ *     1. 2016-9-20  (Fizz): First draft.
+ *     2. 2016-10-15 (Fizz): Make it thread safe.
+ *     3. 2016-10-29 (Fizz): First version. 
+ *
+ * Note:
+ *     1. mempool.h must be included by other file while using this cppfile
+ *     2. -pthread is essential
+ *
+ * */
+
+//#include <fstream>
+//#include <sstream>
+//#include <ctime>
+//#include <unistd.h>
+
 #include <vector>
 
-#include "loghandle.h"
+#include <stdlib.h>
+#include <malloc.h>
+#include <map>
+#include <climits>
+
 #include "mempool.h"
-#include "memutil.h"
+#include "log.h"
+#include "lock.h"
+#include "utility.h"
+
+typedef unsigned long long ULLONG;
 
 const size_t MAX_LEAK_RECORD_NUM = 10000;
+
+/**********************Lock begin ****************************************/
+
+namespace
+{
+
+
+
+}
+
+
+/**********************Lock end ****************************************/
+
+/**********************Loghandler begin******************************************/
+namespace
+{
+
+
+
+}
+
+/**********************Loghandler end******************************************/
+
+/**********************Address Info Declearation begin*************************************/
+
+namespace
+{
+
+class AddrInfo
+{
+public:
+    
+    explicit AddrInfo():m_addr(0), m_alloc_size(0)
+    {
+    }
+    
+    size_t get_alloc_size(){return m_alloc_size;}
+
+    void set_alloc_size(size_t size)
+    {
+        this->m_alloc_size = size;
+        if (m_total_alloc_size > (ULLONG_MAX - size)) 
+        {
+            //TODO: total size to large
+        }
+        else
+        {
+            m_total_alloc_size += size;
+        }
+    }
+
+    virtual ~AddrInfo(){};
+     
+public:
+
+    size_t m_addr;
+
+    static ULLONG m_total_alloc_size;
+
+    //static ULLONG m_total_free_size;
+    
+protected:
+
+    size_t m_alloc_size;
+
+};
+
+class LeakCheckAddrInfo: public AddrInfo
+{
+public:
+    
+    explicit LeakCheckAddrInfo()
+    {
+        m_addr = 0;
+        m_vec_backtrace.clear();
+    }
+    
+    void get_callerfunc_addr();
+    
+public:
+
+    std::vector<std::string> m_vec_backtrace;
+    
+};
+
+
+class BoundaryCheckAddrInfo: public AddrInfo
+{
+public:
+
+    explicit BoundaryCheckAddrInfo()
+    {
+        m_addr = 0;
+    }
+};
+
 ULLONG AddrInfo::m_total_alloc_size = 0;
-ULLONG AddrInfo::m_total_free_size = 0;
+//ULLONG AddrInfo::m_total_free_size = 0;
 
-std::map<void*, LeakCheckAddrInfo> g_map_leak_check;
+}
+/**********************Address Info Declearation end******************************************/
 
-std::string get_callerfunc_addr();
-void get_callerfunc_addr(std::vector<std::string>& vec_backtrace);
-void insert_addrinfo_to_map(const LeakCheckAddrInfo& addrinfo);
-void print_addrinfo_in_format(const LeakCheckAddrInfo& addrinfo);
-//void get_caller_func(std::vector<std::string>& vec_backtrace, std::string& caller_name);
+// global declearation
+namespace
+{
 
+CMutexLock g_leak_map_mutex;
+
+CMutexLock g_aquire_switch_mutex; 
+
+CMutexLock g_file_dump_mutex;
+
+std::map<size_t, LeakCheckAddrInfo> g_leak_addrinfo_map;
+
+
+}
+
+/**********************Memutil begin******************************************/
+
+/*write an addrinfo to specific file*/
+void print_addrinfo_in_format(const LeakCheckAddrInfo& addrinfo)
+{
+    std::vector <std::string>::const_iterator iter = addrinfo.m_vec_backtrace.begin();
+
+    for (; iter != addrinfo.m_vec_backtrace.end(); ++iter)
+    {
+        LogHandle::get_instance(FILE_TYPE_ALLOC).log_debug(*iter);
+    }
+
+    return;
+}
+
+/*write all addrinfos in map to specific file*/
+void dump_memory_record(const std::map<size_t, LeakCheckAddrInfo>& mem_records)
+{
+    LogHeadInfo head_info;
+    head_info.leak_sum = mem_records.size();
+
+    MutexGuard guard(g_file_dump_mutex);
+
+    LogHandle::get_instance(FILE_TYPE_ALLOC).log_head_info(head_info);
+    
+    std::string line("------------------------");
+    std::map <size_t, LeakCheckAddrInfo>::const_iterator iter = mem_records.begin();
+    for (; iter != mem_records.end(); ++iter)
+    {
+        LogHandle::get_instance(FILE_TYPE_ALLOC).log_print(line);
+        print_addrinfo_in_format(iter->second);
+    }
+
+    LogHandle::get_instance(FILE_TYPE_ALLOC).log_print(line);
+
+    return;
+}
+
+void* dump_map(void* para)
+{
+    /* TODO: Lock */
+    {
+        MutexGuard guard(g_leak_map_mutex);
+        dump_memory_record(g_leak_addrinfo_map);
+        g_leak_addrinfo_map.clear();
+    }
+}
+
+/**********************Memutil end******************************************/
+
+/**********************Memory Record begin******************************************/
+// leak records operate interface
+namespace
+{
+
+class SMemoryRecordHandler
+{
+public:
+
+    static SMemoryRecordHandler& getInstance()
+    {
+        static SMemoryRecordHandler s_instance;
+
+        return s_instance;
+    }
+
+    void insert(const LeakCheckAddrInfo& addrinfo);
+
+    void erase(size_t ptr);
+
+private:
+
+    SMemoryRecordHandler(){}
+};
+
+void SMemoryRecordHandler::insert(const LeakCheckAddrInfo& addrinfo)
+{
+    /*TODO:  Lock */
+    MutexGuard guard(g_leak_map_mutex);
+    if (g_leak_addrinfo_map.size()  < MAX_LEAK_RECORD_NUM)
+    {
+        g_leak_addrinfo_map.insert(std::make_pair(addrinfo.m_addr, addrinfo));
+    }
+
+    return;
+}
+
+void SMemoryRecordHandler::erase(size_t ptr)
+{
+    /*TODO:  Lock */
+    MutexGuard guard(g_leak_map_mutex);
+
+    std::map<size_t, LeakCheckAddrInfo>::const_iterator it = g_leak_addrinfo_map.find(ptr);
+    if (it != g_leak_addrinfo_map.end())
+    {
+        g_leak_addrinfo_map.erase(ptr);
+    }
+
+    return;
+}
+
+
+
+}
+/**********************Memory Record end***********************************************/
+
+/**********************Hooks Declearation begin******************************************/
 static void (*old_free)(void *ptr, const void *caller);
+
 static void *(*old_malloc)(size_t size, const void *caller);
 
 static void __fizz_free(void *ptr, const void *caller);
-static void *__fizz_malloc(size_t size, const void *caller);
+
+static void *__fizz_malloc(size_t size, const void *caller); 
 
 static void __fizz_hook_back()
 {
     old_malloc = __malloc_hook;
+
     old_free = __free_hook;
 }
 
 static void __fizz_hook_init()
 {
     __malloc_hook = __fizz_malloc;
+
     __free_hook = __fizz_free;
 }
 
 static void __fizz_hook_restore()
 {
     __malloc_hook = old_malloc;
+
     __free_hook = old_free;
 }
 
-static void __fizz_free(void *ptr, const void *caller) {
+static void __fizz_free(void *ptr, const void *caller) 
+{
     __fizz_hook_restore();   // hook restore is essential, otherwise it will dead loop 
 
-#if defined __MEMPOOL_RUNTIME_DETAIL
-    //std::cout << "free  :"<< ptr << std::endl;
-#endif
-
-    std::map<void*, LeakCheckAddrInfo>::iterator iter = g_map_leak_check.find(ptr);
-    if (iter != g_map_leak_check.end())
+    if (GMemoryRecordSwitch::getInstance().getSwitch())
     {
-        g_map_leak_check.erase(ptr);
+        SMemoryRecordHandler::getInstance().erase((size_t)ptr);
     }
 
     free(ptr);
     (void) caller;
     __fizz_hook_init();
+
     return;
 }
 
 static void *__fizz_malloc(size_t size, const void *caller)
 {
-     void *ptr = NULL;
+    void *ptr = NULL;
     __fizz_hook_restore();        // hook restore is essential, otherwise it will dead loop
     ptr = malloc(size);
-#if defined __MEMPOOL_RUNTIME_DETAIL
-    if (ptr)
+
+    if (GMemoryRecordSwitch::getInstance().getSwitch() && ptr) 
     {
         LeakCheckAddrInfo addrinfo;
 
-        addrinfo.m_addr = ptr;
+        addrinfo.m_addr = (size_t)ptr;
         addrinfo.get_callerfunc_addr();
         addrinfo.set_alloc_size(size);
-        
-        insert_addrinfo_to_map(addrinfo);
+
+        SMemoryRecordHandler::getInstance().insert(addrinfo);
     }
-#endif
 
     (void) caller;
     __fizz_hook_init();
     return ptr;
 }
 
-static void __fizz_mempool_destroy()
-{
-    __fizz_hook_restore();
-
-#if defined __PRINT_LOG
-    LogHeadInfo head_info;
-    head_info.leak_sum = g_map_leak_check.size();
-    LogHandle::get_instance().log_head_info(head_info);
-
-    std::string line("--------------------");
-    std::map<void*, LeakCheckAddrInfo>::iterator iter = g_map_leak_check.begin();
-    for (; iter != g_map_leak_check.end(); ++iter)
-    {
-        LogHandle::get_instance().log_print(line);
-        print_addrinfo_in_format(iter->second);
-    }
-#endif /*__PRINT_LOG */
-    return ;
-}
 
 void __fizz_mempool_init()
 {
-    std::cout << "fizz_mempool_init" << std::endl;
     __fizz_hook_back();
+
     __fizz_hook_init();
-    atexit(__fizz_mempool_destroy);
 
     return ;
 }
 
-/*
-void __fizz_malloc_hook_init(void)
-{
-    void (* __malloc_initialize_hook) (void) =  __fizz_mempool_init;
-
-    return ;
-}
-*/
-
-#if 0
-void operator delete(void* p)
-{
-    free(p);
-}
-
-void operator delete[](void* p)
-{
-    free(p);
-}
-#endif
-
-
-void insert_addrinfo_to_map(const LeakCheckAddrInfo& addrinfo)
-{
-    if (g_map_leak_check.size() < MAX_LEAK_RECORD_NUM)
-    {
-        g_map_leak_check.insert(std::make_pair(addrinfo.m_addr, addrinfo));
-    }
-
-    return;
-}
-
-void print_addrinfo_in_format(const LeakCheckAddrInfo& addrinfo)
-{
-#ifndef __USE_RDYNAMIC_OPTION
-    LogHandle::get_instance().log_debug(addrinfo.m_caller_ip);
-#else
-    std::vector <std::string>::const_iterator iter = addrinfo.m_vec_backtrace.begin();
-    for (; iter != addrinfo.m_vec_backtrace.end(); ++ iter)
-    {
-        LogHandle::get_instance().log_debug(*iter);
-    }
-#endif
-    return;
-}
+/**********************Hooks Declearation end******************************************/
 
 void LeakCheckAddrInfo::get_callerfunc_addr(void)
 {
     (void)MEMUTIL::get_callerfunc_addr(this->m_vec_backtrace);
+
     return ;
 }
+
+void GMemoryRecordSwitch::setSwitch(bool bSwitch)
+{
+
+    /* TODO: Lock */
+    {
+        MutexGuard guard(g_aquire_switch_mutex);
+        if (bSwitch)
+        {
+            /* TODO: Lock */
+            this->m_aquire_count ++;
+        }
+        else
+        {
+            this->m_aquire_count --;
+        }
+
+        if(this->m_aquire_count > 0)
+        {
+            this->m_switch = true;
+            return;
+        }
+
+        this->m_switch = false;
+    }
+
+    pthread_t dump_file_thread;
+    pthread_create(&dump_file_thread, NULL, dump_map, NULL);
+    
+    return;
+}
+
+
+
 
