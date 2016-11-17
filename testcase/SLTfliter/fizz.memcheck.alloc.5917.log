@@ -1,0 +1,80 @@
+/**************************
+* leak num: 0
+************************/
+
+
+------------------------
+/**************************
+* leak num: 1
+************************/
+
+
+------------------------
+17:30:55:[D] /lib/libleak.so(_ZN7MEMUTIL19get_callerfunc_addrERSt6vectorISsSaISsEE+0x4c) [0x7f8a1ade69f0]
+17:30:55:[D] /lib/libleak.so(+0x5dfe) [0x7f8a1ade3dfe]
+17:30:55:[D] /lib/libleak.so(+0x5d71) [0x7f8a1ade3d71]
+17:30:55:[D] /usr/lib/x86_64-linux-gnu/libstdc++.so.6(_Znwm+0x1d) [0x7f8a1ab38dad]
+17:30:55:[D] ./main(_ZN9__gnu_cxx13new_allocatorIiE8allocateEmPKv+0x40) [0x40673a]
+17:30:55:[D] ./main(_ZNSt12_Vector_baseIiSaIiEE11_M_allocateEm+0x2f) [0x405ffd]
+17:30:55:[D] ./main(_ZNSt6vectorIiSaIiEE13_M_insert_auxEN9__gnu_cxx17__normal_iteratorIPiS1_EERKi+0x10f) [0x405881]
+17:30:55:[D] ./main(_ZNSt6vectorIiSaIiEE9push_backERKi+0x78) [0x4054ae]
+17:30:55:[D] ./main(_Z12vector_checkv+0x55) [0x4050c8]
+17:30:55:[D] ./main(main+0xe) [0x405269]
+17:30:55:[D] /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf5) [0x7f8a1a520f45]
+17:30:55:[D] ./main() [0x404e99]
+------------------------
+/**************************
+* leak num: 2
+************************/
+
+
+------------------------
+17:30:55:[D] /lib/libleak.so(_ZN7MEMUTIL19get_callerfunc_addrERSt6vectorISsSaISsEE+0x4c) [0x7f8a1ade69f0]
+17:30:55:[D] /lib/libleak.so(+0x5dfe) [0x7f8a1ade3dfe]
+17:30:55:[D] /lib/libleak.so(+0x5d71) [0x7f8a1ade3d71]
+17:30:55:[D] /usr/lib/x86_64-linux-gnu/libstdc++.so.6(_Znwm+0x1d) [0x7f8a1ab38dad]
+17:30:55:[D] ./main(_ZN9__gnu_cxx13new_allocatorISt10_List_nodeIiEE8allocateEmPKv+0x49) [0x406baf]
+17:30:55:[D] ./main(_ZNSt10_List_baseIiSaIiEE11_M_get_nodeEv+0x22) [0x4067f8]
+17:30:55:[D] ./main(_ZNSt4listIiSaIiEE14_M_create_nodeERKi+0x1d) [0x406189]
+17:30:55:[D] ./main(_ZNSt4listIiSaIiEE9_M_insertESt14_List_iteratorIiERKi+0x27) [0x405ba1]
+17:30:55:[D] ./main(_ZNSt4listIiSaIiEE9push_backERKi+0x32) [0x40555e]
+17:30:55:[D] ./main(_Z10list_checkv+0x3b) [0x40514f]
+17:30:55:[D] ./main(main+0x13) [0x40526e]
+17:30:55:[D] /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf5) [0x7f8a1a520f45]
+17:30:55:[D] ./main() [0x404e99]
+------------------------
+17:30:55:[D] /lib/libleak.so(_ZN7MEMUTIL19get_callerfunc_addrERSt6vectorISsSaISsEE+0x4c) [0x7f8a1ade69f0]
+17:30:55:[D] /lib/libleak.so(+0x5dfe) [0x7f8a1ade3dfe]
+17:30:55:[D] /lib/libleak.so(+0x5d71) [0x7f8a1ade3d71]
+17:30:55:[D] /usr/lib/x86_64-linux-gnu/libstdc++.so.6(_Znwm+0x1d) [0x7f8a1ab38dad]
+17:30:55:[D] ./main(_ZN9__gnu_cxx13new_allocatorISt10_List_nodeIiEE8allocateEmPKv+0x49) [0x406baf]
+17:30:55:[D] ./main(_ZNSt10_List_baseIiSaIiEE11_M_get_nodeEv+0x22) [0x4067f8]
+17:30:55:[D] ./main(_ZNSt4listIiSaIiEE14_M_create_nodeERKi+0x1d) [0x406189]
+17:30:55:[D] ./main(_ZNSt4listIiSaIiEE9_M_insertESt14_List_iteratorIiERKi+0x27) [0x405ba1]
+17:30:55:[D] ./main(_ZNSt4listIiSaIiEE9push_backERKi+0x32) [0x40555e]
+17:30:55:[D] ./main(_Z10list_checkv+0x55) [0x405169]
+17:30:55:[D] ./main(main+0x13) [0x40526e]
+17:30:55:[D] /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf5) [0x7f8a1a520f45]
+17:30:55:[D] ./main() [0x404e99]
+------------------------
+/**************************
+* leak num: 1
+************************/
+
+
+------------------------
+17:30:55:[D] /lib/libleak.so(_ZN7MEMUTIL19get_callerfunc_addrERSt6vectorISsSaISsEE+0x4c) [0x7f8a1ade69f0]
+17:30:55:[D] /lib/libleak.so(+0x5dfe) [0x7f8a1ade3dfe]
+17:30:55:[D] /lib/libleak.so(+0x5d71) [0x7f8a1ade3d71]
+17:30:55:[D] /usr/lib/x86_64-linux-gnu/libstdc++.so.6(_Znwm+0x1d) [0x7f8a1ab38dad]
+17:30:55:[D] ./main(_ZN9__gnu_cxx13new_allocatorISt13_Rb_tree_nodeISt4pairIKiiEEE8allocateEmPKv+0x4a) [0x406da0]
+17:30:55:[D] ./main(_ZNSt8_Rb_treeIiSt4pairIKiiESt10_Select1stIS2_ESt4lessIiESaIS2_EE11_M_get_nodeEv+0x22) [0x406c5a]
+17:30:55:[D] ./main(_ZNSt8_Rb_treeIiSt4pairIKiiESt10_Select1stIS2_ESt4lessIiESaIS2_EE14_M_create_nodeERKS2_+0x1d) [0x406a39]
+17:30:55:[D] ./main(_ZNSt8_Rb_treeIiSt4pairIKiiESt10_Select1stIS2_ESt4lessIiESaIS2_EE10_M_insert_EPSt18_Rb_tree_node_baseSA_RKS2_+0x9e) [0x406518]
+17:30:55:[D] ./main(_ZNSt8_Rb_treeIiSt4pairIKiiESt10_Select1stIS2_ESt4lessIiESaIS2_EE16_M_insert_uniqueERKS2_+0x62) [0x405cf2]
+17:30:55:[D] ./main(_ZNSt3mapIiiSt4lessIiESaISt4pairIKiiEEE6insertERKS4_+0x23) [0x405665]
+17:30:55:[D] ./main(_Z9map_checkv+0x5a) [0x40520f]
+17:30:55:[D] ./main(main+0x18) [0x405273]
+17:30:55:[D] /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf5) [0x7f8a1a520f45]
+17:30:55:[D] ./main() [0x404e99]
+------------------------

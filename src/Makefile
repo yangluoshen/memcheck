@@ -24,7 +24,7 @@ libleak.so: $(SRCS)
 #	ar rcs $(AR_MEMPOOL) $(OBJS)
 
 main: main.cpp 
-	$(CXX) $(CXX_FLAGS) -g -o $@ $^  $(LD_LEAK_FLAG) -I ./include
+	$(CXX) $(CXX_FLAGS) -g -rdynamic -o $@ $^  $(LD_LEAK_FLAG) -I ./include
 
 clean:
 	rm main fizz.memcheck.*.log *.o 
