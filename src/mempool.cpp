@@ -23,6 +23,7 @@
 #include <malloc.h>
 #include <map>
 #include <climits>
+#include <cstring>
 
 #include "mempool.h"
 #include "log.h"
@@ -33,27 +34,6 @@ typedef unsigned long long ULLONG;
 
 const size_t MAX_LEAK_RECORD_NUM = 10000;
 
-/**********************Lock begin ****************************************/
-
-namespace
-{
-
-
-
-}
-
-
-/**********************Lock end ****************************************/
-
-/**********************Loghandler begin******************************************/
-namespace
-{
-
-
-
-}
-
-/**********************Loghandler end******************************************/
 
 /**********************Address Info Declearation begin*************************************/
 
@@ -154,35 +134,43 @@ std::map<size_t, LeakCheckAddrInfo> g_leak_addrinfo_map;
 /*write an addrinfo to specific file*/
 void print_addrinfo_in_format(const LeakCheckAddrInfo& addrinfo)
 {
+    const size_t MAX_BACKTRACE_BUF_LEN = 1024 * 5;
+    char trace_buf[MAX_BACKTRACE_BUF_LEN] = {0};
+
     std::vector <std::string>::const_iterator iter = addrinfo.m_vec_backtrace.begin();
 
-    for (; iter != addrinfo.m_vec_backtrace.end(); ++iter)
+    size_t trace_len = 0;
+    for (; (iter != addrinfo.m_vec_backtrace.end()) && (trace_len + iter->size() + 2 < MAX_BACKTRACE_BUF_LEN); trace_len+=iter->size() + 2, ++iter)
     {
-        LogHandle::get_instance(FILE_TYPE_ALLOC).log_debug(*iter);
+        strncat(trace_buf, iter->c_str(), iter->size());
+        strcat(trace_buf, "\r\n");
     }
 
+    LogHandle::get_instance(FILE_TYPE_ALLOC).log_print(trace_buf);
     return;
 }
 
 /*write all addrinfos in map to specific file*/
 void dump_memory_record(const std::map<size_t, LeakCheckAddrInfo>& mem_records)
 {
-    LogHeadInfo head_info;
-    head_info.leak_sum = mem_records.size();
 
     MutexGuard guard(g_file_dump_mutex);
 
-    LogHandle::get_instance(FILE_TYPE_ALLOC).log_head_info(head_info);
-    
     std::string line("------------------------");
     std::map <size_t, LeakCheckAddrInfo>::const_iterator iter = mem_records.begin();
     for (; iter != mem_records.end(); ++iter)
     {
-        LogHandle::get_instance(FILE_TYPE_ALLOC).log_print(line);
+        // filter STL
+        if (MEMUTIL::is_stl_backtrace(iter->second.m_vec_backtrace))
+        {
+            continue;
+        }
+
+        LogHandle::get_instance(FILE_TYPE_ALLOC).log_debug(line);
         print_addrinfo_in_format(iter->second);
     }
 
-    LogHandle::get_instance(FILE_TYPE_ALLOC).log_print(line);
+    //LogHandle::get_instance(FILE_TYPE_ALLOC).log_print(line);
 
     return;
 }
@@ -195,6 +183,8 @@ void* dump_map(void* para)
         dump_memory_record(g_leak_addrinfo_map);
         g_leak_addrinfo_map.clear();
     }
+
+    return (void*) 0;
 }
 
 /**********************Memutil end******************************************/
@@ -249,7 +239,6 @@ void SMemoryRecordHandler::erase(size_t ptr)
 
     return;
 }
-
 
 
 }
@@ -358,7 +347,7 @@ void GMemoryRecordSwitch::setSwitch(bool bSwitch)
             this->m_aquire_count --;
         }
 
-        if(this->m_aquire_count > 0)
+        if (this->m_aquire_count > 0)
         {
             this->m_switch = true;
             return;

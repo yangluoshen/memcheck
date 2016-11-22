@@ -65,6 +65,11 @@ int main()
     map_check();
     }
 
+    {
+        SMiniCheck check;
+        new char[1];
+    }
+
     sleep(1);
     return 0;
 }

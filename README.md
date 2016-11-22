@@ -13,7 +13,7 @@ Memory check for C/C++.
 
 1. Target
 ------
-- 造个轮子:)
+- 造个轮子:）
 
 功能
 ----

@@ -44,6 +44,8 @@ public:
     void log_head_info(LogHeadInfo head_info);
     
     void log_print(const std::string& log);
+
+    void log_print(const char* log);
  
 private:
 

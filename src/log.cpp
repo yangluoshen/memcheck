@@ -57,6 +57,9 @@ void LogHandle::log_consist(enum log_level level, const std::string& content, st
 
 void LogHandle::log_print(const std::string& log)
 {
+    log_print(log.c_str());
+
+    /*
     if (log_file_name.empty())
     {
         get_logname(this->log_file_name); 
@@ -75,8 +78,35 @@ void LogHandle::log_print(const std::string& log)
     fout.write(log_buf.c_str(), log_buf.size());
 
     fout.close();
+    */
 
     return;
+}
+
+void LogHandle::log_print(const char* log)
+{
+    if (!log)
+    {
+        return;
+    }
+
+    if (log_file_name.empty())
+    {
+        get_logname(this->log_file_name); 
+    }
+
+    std::ofstream fout(this->log_file_name.c_str(), std::ofstream::out | std::ofstream::app);
+    if (!fout.is_open())
+    {
+        return;
+    }
+
+    fout << log << std::endl;
+
+    fout.close();
+
+    return;
+
 }
 
 void LogHandle::log_debug(const std::string& content)
