@@ -1,6 +1,6 @@
 Memcheck
 ========
-Memory check for C/C++.
+Memory check for C++.
 
 <pre>
          _____         .__                   __    
@@ -13,12 +13,12 @@ Memory check for C/C++.
 
 1. Target
 ------
-- �������:��
+- 造个轮子:）
 
-����
+功能
 ----
-- ����ڴ�й¶��ָ��й¶λ��
-- �����ڴ棨�Ƿ������Ƿ�д��
+- 检查内存泄露，指出泄露位置
+- 检查踩内存（非法读，非法写）
 
 
 tips
